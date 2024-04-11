@@ -33,11 +33,12 @@ function SomeoneIsTyping() {
 
 function Example() {
   const [draft, setDraft] = useState("");
+  const [date, setDate] = useState("");
   const updateMyPresence = useUpdateMyPresence();
   const todos = useStorage((root) => root.todos);
 
-  const addTodo = useMutation(({ storage }, text) => {
-    storage.get("todos").push(new LiveObject({ text }));
+  const addTodo = useMutation(({ storage }, text, date) => {
+    storage.get("todos").push(new LiveObject({ text, checked: false, date }));
   }, []);
 
   const toggleTodo = useMutation(({ storage }, index) => {
@@ -52,6 +53,14 @@ function Example() {
   return (
     <div className="container">
       <WhoIsHere />
+      <input 
+        type="date"
+        value={date}
+        onChange={(e) => {
+          setDate(e.target.value);
+          updateMyPresence({ isTyping: true });
+        }}
+      />
       <input
         type="text"
         placeholder="What needs to be done?"
@@ -63,17 +72,18 @@ function Example() {
         onKeyDown={(e) => {
           if (draft && e.key === "Enter") {
             updateMyPresence({ isTyping: false });
-            addTodo(draft);
+            addTodo(draft, date);
             setDraft("");
           }
         }}
         onBlur={() => updateMyPresence({ isTyping: false })}
       />
+      
       <SomeoneIsTyping />
       {todos.map((todo, index) => {
         return (
           <div key={index} className="todo_container">
-            <div className="todo" onClick={() => toggleTodo(index)}>
+            <div className="todo flex flex-col" onClick={() => toggleTodo(index)}>
               <span
                 style={{
                   cursor: "pointer",
@@ -82,6 +92,12 @@ function Example() {
               >
                 {todo.text}
               </span>
+              <p
+              style={{
+                cursor: "pointer",
+                textDecoration: todo.checked ? "line-through" : undefined,
+              }}
+              >{todo.date}</p>
             </div>
             <button className="delete_button" onClick={() => deleteTodo(index)}>
               ✕
